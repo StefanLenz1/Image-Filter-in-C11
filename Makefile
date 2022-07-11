@@ -15,4 +15,5 @@ imagefilter: imagefilter.o filters.o
 clean:
 	-rm *.o
 	-rm imagefilter
-	-rm output/*
+	-rm images/*.bmp
+	-rm output/*.bmp

@@ -10,9 +10,9 @@ void selectFilter(const int filter, int height, int width, RGBTRIPLE image[heigh
 
 int main(int argc, char *argv[])
 {
-    const char filters[] = "begrn"; //Erlaubte Filter flags
+    const char filters[] = "mbegrn"; // Erlaubte Filter flags
     const int filter_flag = checkInput(argc, argv, filters);
-    if(filter_flag == 0)
+    if (filter_flag == 0)
     {
         return 1;
     }
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     char input_image_source[100] = "images/";
     char *infile_name = argv[optind];
     strcat(input_image_source, infile_name);
-    
+
     char output_image_source[100] = "output/";
     char *output_name = argv[optind + 1];
     strcat(output_image_source, output_name);
@@ -59,7 +59,8 @@ int main(int argc, char *argv[])
     int height = abs(input_bm_info_header.biHeight);
     int width = input_bm_info_header.biWidth;
 
-    RGBTRIPLE(*image)[width] = calloc(height, width * sizeof(RGBTRIPLE));
+    RGBTRIPLE(*image)
+    [width] = calloc(height, width * sizeof(RGBTRIPLE));
     if (image == NULL)
     {
         printf("Nicht Genug Speicher für das Bild.\n");
@@ -100,13 +101,12 @@ int main(int argc, char *argv[])
     fclose(inptr);
     fclose(outptr);
     return 0;
-
 }
 
 int checkInput(int argc, char *argv[], const char filters[])
 {
-    const char* incorrect_usage_error_message = "Korrekte Verwendung: ./imagefilter -(filter flag) input_file.bmp output_file.bmp\n";
-    
+    const char *incorrect_usage_error_message = "Korrekte Verwendung: ./imagefilter -(filter flag) input_file.bmp output_file.bmp\n";
+
     char filter = getopt(argc, argv, filters);
     if (filter == '?')
     {
@@ -121,8 +121,8 @@ int checkInput(int argc, char *argv[], const char filters[])
         printf("%s", incorrect_usage_error_message);
         return 0;
     }
-    
-    if (argc != optind + 2) //Unzulässige Anzahl an Argumenten
+
+    if (argc != optind + 2) // Unzulässige Anzahl an Argumenten
     {
         printf("Falsche Anzahl an Argumenten.\n");
         printf("%s", incorrect_usage_error_message);
@@ -136,28 +136,23 @@ void selectFilter(const int filter, int height, int width, RGBTRIPLE image[heigh
 {
     switch (filter)
     {
-        // Blur
-        case 'b':
-            blur(height, width, image);
-            break;
-
-        // Edges
-        case 'e':
-            edges(height, width, image);
-            break;
-
-        // Grayscale
-        case 'g':
-            grayscale(height, width, image);
-            break;
-
-        // Reflect
-        case 'r':
-            reflect(height, width, image);
-            break;
-        // No filter
-        case 'n':
-            nofilter();
-            break;
+    case 'g':
+        grayscale(height, width, image);
+        break;
+    case 'r':
+        reflect(height, width, image);
+        break;
+    case 'b':
+        blur(height, width, image);
+        break;
+    case 'm':
+        motionBlur(height, width, image);
+        break;
+    case 'e':
+        edges(height, width, image);
+        break;
+    case 'n':
+        nofilter();
+        break;
     }
 }

@@ -1,11 +1,10 @@
 #include <math.h>
 #include <stdint.h>
-
 #include <stdlib.h>
 
 #include "filters.h"
 
-// Convert image to grayscale
+// Schwarz-Weiß Filter
 void grayscale(int height, int width, RGBTRIPLE image[height][width])
 {
     for (int i = 0; i < height; i++)
@@ -21,10 +20,10 @@ void grayscale(int height, int width, RGBTRIPLE image[height][width])
     return;
 }
 
-// Reflect image horizontally
+// Horizontal spiegeln
 void reflect(int height, int width, RGBTRIPLE image[height][width])
 {
-    RGBTRIPLE (*copy)[width] = malloc(sizeof(int[height][width]));
+    RGBTRIPLE(*copy)[width] = malloc(sizeof(int[height][width]));
     for (int i = 0; i < height; i++)
     {
         for (int j = 0; j < width; j++)
@@ -43,10 +42,12 @@ void reflect(int height, int width, RGBTRIPLE image[height][width])
     return;
 }
 
-// Blur image
+// Verwaschen-Filter
 void blur(int height, int width, RGBTRIPLE image[height][width])
 {
-    RGBTRIPLE (*copy)[width] = malloc(sizeof(int[height][width]));
+    const int pixelRangeBlur = round(height / 200); //"magic number" für hochauflösende bilder
+
+    RGBTRIPLE(*copy)[width] = malloc(sizeof(int[height][width]));
     for (int i = 0; i < height; i++)
     {
         for (int j = 0; j < width; j++)
@@ -62,11 +63,11 @@ void blur(int height, int width, RGBTRIPLE image[height][width])
             int neighbours_score_red = 0;
             int neighbours_score_blue = 0;
             int neighbours_score_green = 0;
-            for (int k = -1; k <= 1; k++)
+            for (int k = -1 * pixelRangeBlur; k <= pixelRangeBlur; k++)
             {
-                for (int l = -1; l <= 1; l++)
+                for (int l = -1 * pixelRangeBlur; l <= pixelRangeBlur; l++)
                 {
-                    if ((i + k != -1) && (i + k != height) && (j + l != -1) && (j + l != width))
+                    if ((i + k > 0) && (i + k < height) && (j + l > 0) && (j + l < width))
                     {
                         neighbours_count++;
                         neighbours_score_red += copy[i + k][j + l].rgbtRed;
@@ -84,10 +85,12 @@ void blur(int height, int width, RGBTRIPLE image[height][width])
     return;
 }
 
-// Detect edges
-void edges(int height, int width, RGBTRIPLE image[height][width])
+// Motion Blur Filter
+void motionBlur(int height, int width, RGBTRIPLE image[height][width])
 {
-    RGBTRIPLE (*copy)[width] = malloc(sizeof(int[height][width]));
+    const int pixelRangeBlur = round(height / 50); //"magic number" für hochauflösende bilder
+
+    RGBTRIPLE(*copy)[width] = malloc(sizeof(int[height][width]));
     for (int i = 0; i < height; i++)
     {
         for (int j = 0; j < width; j++)
@@ -99,11 +102,54 @@ void edges(int height, int width, RGBTRIPLE image[height][width])
     {
         for (int j = 0; j < width; j++)
         {
+            int neighbours_count = 0;
+            int neighbours_score_red = 0;
+            int neighbours_score_blue = 0;
+            int neighbours_score_green = 0;
+            for (int k = -1 * pixelRangeBlur; k <= 0; k++)
+            {
+                for (int l = -1 * pixelRangeBlur; l <= 0; l++)
+                {
+                    if ((i + k > 0) && (i + k < height) && (j + l > 0) && (j + l < width) && (k == l))
+                    {
+                        neighbours_count++;
+                        neighbours_score_red += copy[i + k][j + l].rgbtRed;
+                        neighbours_score_blue += copy[i + k][j + l].rgbtBlue;
+                        neighbours_score_green += copy[i + k][j + l].rgbtGreen;
+                    }
+                }
+            }
+            image[i][j].rgbtRed = round((double)neighbours_score_red / (double)neighbours_count);
+            image[i][j].rgbtBlue = round((double)neighbours_score_blue / (double)neighbours_count);
+            image[i][j].rgbtGreen = round((double)neighbours_score_green / (double)neighbours_count);
+        }
+    }
+    free(copy);
+    return;
+}
+
+// Kanten verstärken
+void edges(int height, int width, RGBTRIPLE image[height][width])
+{
+    RGBTRIPLE(*copy)[width] = malloc(sizeof(int[height][width]));
+    for (int i = 0; i < height; i++)
+    {
+        for (int j = 0; j < width; j++)
+        {
+            copy[i][j] = image[i][j];
+        }
+    }
+
+    int area_x[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+    int area_y[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+    for (int i = 0; i < height; i++)
+    {
+        for (int j = 0; j < width; j++)
+        {
             int GxRed = 0, GxBlue = 0, GxGreen = 0;
             int GyRed = 0, GyBlue = 0, GyGreen = 0;
             int GzRed, GzBlue, GzGreen;
-            int area_x[3][3] = {{-1, 0, 1 }, { -2, 0, 2 }, { -1, 0, 1 }};
-            int area_y[3][3] = {{ -1, -2, -1 }, { 0, 0, 0 }, { 1, 2, 1 }};
+
             for (int k = -1; k <= 1; k++)
             {
                 for (int l = -1; l <= 1; l++)
@@ -119,33 +165,14 @@ void edges(int height, int width, RGBTRIPLE image[height][width])
                     }
                 }
             }
+
             GzRed = round(sqrt(GxRed * GxRed + GyRed * GyRed));
             GzBlue = round(sqrt(GxBlue * GxBlue + GyBlue * GyBlue));
             GzGreen = round(sqrt(GxGreen * GxGreen + GyGreen * GyGreen));
-            if (GzRed < 255)
-            {
-                image[i][j].rgbtRed = GzRed;
-            }
-            else
-            {
-                image[i][j].rgbtRed = 255;
-            }
-            if (GzBlue < 255)
-            {
-                image[i][j].rgbtBlue = GzBlue;
-            }
-            else
-            {
-                image[i][j].rgbtBlue = 255;
-            }
-            if (GzGreen < 255)
-            {
-                image[i][j].rgbtGreen = GzGreen;
-            }
-            else
-            {
-                image[i][j].rgbtGreen =  255;
-            }
+
+            (GzRed > 255) ? (image[i][j].rgbtRed = 255) : (image[i][j].rgbtRed = GzRed);
+            (GzBlue > 255) ? (image[i][j].rgbtBlue = 255) : (image[i][j].rgbtBlue = GzBlue);
+            (GzGreen > 255) ? (image[i][j].rgbtGreen = 255) : (image[i][j].rgbtGreen = GzGreen);
         }
     }
     free(copy);
