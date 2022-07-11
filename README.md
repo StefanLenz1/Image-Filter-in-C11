@@ -6,3 +6,4 @@ flags:\
 -e: marks edges\
 -g: makes it black and white\
 -r: reflects them\
+-m: motion blur\
